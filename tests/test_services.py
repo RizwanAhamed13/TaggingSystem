@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from taggingsystem.evaluation.metrics import cer, precision_recall_f1_at_k, wer
 from taggingsystem.services.description import DescriptionService
 from taggingsystem.services.pipeline import DocumentPipeline
@@ -24,7 +26,7 @@ def test_description_service_extracts_short_summary() -> None:
     assert summary.count(".") <= 3
 
 
-def test_pipeline_ingest_returns_outputs(tmp_path) -> None:
+def test_pipeline_ingest_returns_outputs(tmp_path: Path) -> None:
     from taggingsystem.config import settings
 
     settings.local_storage_dir = str(tmp_path)

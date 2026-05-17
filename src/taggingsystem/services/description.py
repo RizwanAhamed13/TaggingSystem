@@ -10,6 +10,10 @@ STOP = {
 }
 
 
+def _ranked_sentence_items(sentences: list[str], frequencies: Counter[str], scorer: "DescriptionService") -> list[tuple[int, float, str]]:
+    return [(idx, scorer._sentence_score(sentence, frequencies), sentence) for idx, sentence in enumerate(sentences)]
+
+
 class DescriptionService:
     """Extractive 1-2 sentence summarizer without any generative model."""
 
@@ -29,7 +33,7 @@ class DescriptionService:
 
         tokens = [w.lower() for w in TOKEN.findall(text) if w.lower() not in STOP]
         freqs = Counter(tokens)
-        ranked = sorted(((idx, self._sentence_score(s, freqs), s) for idx, s in enumerate(sentences)), key=lambda x: x[1], reverse=True)
+        ranked = sorted(_ranked_sentence_items(sentences, freqs, self), key=lambda item: item[1], reverse=True)
         chosen = sorted(ranked[: self.max_sentences], key=lambda x: x[0])
         summary = " ".join(s for _, _, s in chosen)
         if len(summary) > 400:

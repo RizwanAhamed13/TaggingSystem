@@ -1,11 +1,17 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from functools import lru_cache
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from taggingsystem.api.schemas import DocumentResponse, HealthResponse
 from taggingsystem.services.pipeline import DocumentPipeline
 
 
 router = APIRouter()
-pipeline = DocumentPipeline()
+
+
+@lru_cache(maxsize=1)
+def get_pipeline() -> DocumentPipeline:
+    return DocumentPipeline()
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -14,7 +20,9 @@ def health() -> HealthResponse:
 
 
 @router.post("/documents", response_model=DocumentResponse)
-async def ingest_document(file: UploadFile = File(...)) -> DocumentResponse:
+async def ingest_document(
+    file: UploadFile = File(...), pipeline: DocumentPipeline = Depends(get_pipeline)
+) -> DocumentResponse:
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
@@ -31,7 +39,7 @@ async def ingest_document(file: UploadFile = File(...)) -> DocumentResponse:
 
 
 @router.get("/documents/{document_id}", response_model=DocumentResponse)
-def get_document(document_id: str) -> DocumentResponse:
+def get_document(document_id: str, pipeline: DocumentPipeline = Depends(get_pipeline)) -> DocumentResponse:
     record = pipeline.repo.get(document_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Document not found")

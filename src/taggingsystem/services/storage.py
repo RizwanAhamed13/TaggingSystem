@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import uuid4
 
 
 class LocalStorage:
@@ -8,9 +9,7 @@ class LocalStorage:
 
     def save(self, filename: str, content: bytes) -> str:
         target = self.base_path / filename
-        counter = 1
-        while target.exists():
-            target = self.base_path / f"{target.stem}_{counter}{target.suffix}"
-            counter += 1
+        if target.exists():
+            target = self.base_path / f"{target.stem}_{uuid4().hex[:8]}{target.suffix}"
         target.write_bytes(content)
         return f"file://{target.resolve()}"
